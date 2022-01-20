@@ -22,7 +22,7 @@ module.exports = class MessageEvent extends BaseEvent {
     if(!db[message.guild.id]) return;
     if(db[message.guild.id] === 'off') return;
 
-    let isThere = message.attachments.reduce(
+    let isThere = await message.attachments.reduce(
      async function(bool,attachment) {
       let url = attachment.url;
 
@@ -41,7 +41,6 @@ module.exports = class MessageEvent extends BaseEvent {
       } catch(e) {
         console.log(`${message.author.id} (${message.author.name})\nSend Some attachments And Can't Modify Them`)
       }
-  
       if(isNsfw(predictions)) {
         bool = true;
       }
@@ -49,11 +48,12 @@ module.exports = class MessageEvent extends BaseEvent {
     },false)
 
     if(isThere) {
+      console.log(message.author.username,isThere)
       if(message.deletable) {
         message.delete();
-        message.guild.owner.send(`${message.author.id}, Send A NSFW Image!\nMessage Deleted Successfully!\nAt: ${message.guild.name}`);
+        // message.guild.owner.send(`${message.author.id}, Send A NSFW Image!\nMessage Deleted Successfully!\nAt: ${message.guild.name}`);
       }else {
-        message.guild.owner.send(`${message.author.id}, Send A NSFW Image!\n:x: Cannot Delete The Message (Channel: ${message.channel})\nAt: ${message.guild.name}`);
+        // message.guild.owner.send(`${message.author.id}, Send A NSFW Image!\n:x: Cannot Delete The Message (Channel: ${message.channel})\nAt: ${message.guild.name}`);
       }
     }
   }
@@ -61,19 +61,9 @@ module.exports = class MessageEvent extends BaseEvent {
 
 
 function isNsfw(nsp) {
-  let isNsfw = false;
-
-  if(['Hentai','Porn','Sexy'].includes(nsp[0].className)) {
-    isNsfw = true;
-  }else {
-    if(['Hentai','Porn','Sexy'].includes(nsp[1].className)) {
-      if((nsp[1].probability * 100) < 30) {
-        isNsfw = false;
-      }else {
-        isNsfw = true;
-      }
-    }
-  }
-
-  return isNsfw;
+  if(['Neutral','Drawing'].includes(nsp[0].className) ) {
+    return false;
+  }else if(['Porn','Hentai'].includes(nsp[1].className) &&
+  nsp[1].probability > 0.6) return true;
+  else return false
 }
